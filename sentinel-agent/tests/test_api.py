@@ -46,5 +46,11 @@ class SentinelApiTests(unittest.TestCase):
         response = client.post('/api/analyze', json={'events':[]})
         self.assertEqual(response.status_code, 422)
 
+    def test_system_reset_clears_telemetry(self):
+        response = client.post('/api/system/reset')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'ok')
+        self.assertEqual(response.json()['metrics']['total_events'], 0)
+
 if __name__ == '__main__':
     unittest.main()

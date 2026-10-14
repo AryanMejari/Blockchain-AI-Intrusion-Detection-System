@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SecurityEvent } from '../lib/api';
-import { Play, Pause, Search, Filter, ShieldAlert, CheckCircle2, Clock, Globe } from 'lucide-react';
+import { Play, Pause, Search, Filter, ShieldAlert, CheckCircle2, Clock, Globe, Activity } from 'lucide-react';
 
 interface EventStreamProps {
   events: SecurityEvent[];
@@ -37,47 +37,47 @@ export const EventStream: React.FC<EventStreamProps> = ({
   const getSeverityBadge = (severity: string) => {
     switch (severity?.toLowerCase()) {
       case 'critical':
-        return <span className="px-2 py-0.5 text-xs font-semibold rounded bg-red-950/80 text-red-400 border border-red-800">CRITICAL</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-950/80 text-rose-400 border border-rose-800 neo-pill">CRITICAL</span>;
       case 'high':
-        return <span className="px-2 py-0.5 text-xs font-semibold rounded bg-orange-950/80 text-orange-400 border border-orange-800">HIGH</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-orange-950/80 text-orange-400 border border-orange-800 neo-pill">HIGH</span>;
       case 'medium':
-        return <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-950/80 text-amber-400 border border-amber-800">MEDIUM</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-950/80 text-amber-400 border border-amber-800 neo-pill">MEDIUM</span>;
       default:
-        return <span className="px-2 py-0.5 text-xs font-semibold rounded bg-slate-800 text-slate-300 border border-slate-700">LOW</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 neo-pill">LOW</span>;
     }
   };
 
   const getStatusBadge = (status: string) => {
     if (status === 'flagged') {
-      return <span className="text-xs text-red-400 font-mono flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> FLAGGED</span>;
+      return <span className="text-[11px] text-rose-400 font-mono flex items-center gap-1 font-bold"><ShieldAlert className="w-3.5 h-3.5" /> FLAGGED</span>;
     }
-    return <span className="text-xs text-slate-400 font-mono flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> MONITORED</span>;
+    return <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> MONITORED</span>;
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-2xl backdrop-blur-sm flex flex-col h-full">
+    <div className="neo-card rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full">
       {/* Stream Controls */}
-      <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/50">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
-          <h2 className="text-sm font-semibold tracking-wider uppercase text-slate-200">
+      <div className="p-4 border-b border-white/[0.04] flex flex-wrap items-center justify-between gap-3 bg-[#0d121f]/60">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+          <h2 className="text-xs font-bold tracking-wider uppercase text-slate-200">
             Live Telemetry Stream
           </h2>
-          <span className="text-xs text-slate-400 font-mono bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
-            {filtered.length} / {events.length}
+          <span className="text-[10px] text-slate-400 font-mono neo-well px-2.5 py-0.5 rounded-full">
+            {filtered.length} / {events.length} Records
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Search */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
               placeholder="Search user, IP, detail..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-slate-950 text-slate-200 text-xs pl-8 pr-3 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-cyan-500 w-44 md:w-56"
+              className="neo-well text-slate-200 text-xs pl-8 pr-3 py-1.5 rounded-xl focus:outline-none focus:border-cyan-500 w-44 md:w-56"
             />
           </div>
 
@@ -85,7 +85,7 @@ export const EventStream: React.FC<EventStreamProps> = ({
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-slate-950 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-cyan-500"
+            className="neo-well text-slate-300 text-xs px-2.5 py-1.5 rounded-xl focus:outline-none focus:border-cyan-500"
           >
             <option value="all">All Severities</option>
             <option value="critical">Critical</option>
@@ -98,7 +98,7 @@ export const EventStream: React.FC<EventStreamProps> = ({
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-950 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-cyan-500"
+            className="neo-well text-slate-300 text-xs px-2.5 py-1.5 rounded-xl focus:outline-none focus:border-cyan-500"
           >
             <option value="all">All Types</option>
             <option value="failed_login">failed_login</option>
@@ -113,22 +113,22 @@ export const EventStream: React.FC<EventStreamProps> = ({
           {/* Pause / Resume */}
           <button
             onClick={onTogglePause}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all border ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all neo-btn ${
               isPaused
-                ? 'bg-amber-950/60 text-amber-300 border-amber-800 hover:bg-amber-900/60'
-                : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                ? 'text-amber-400 border border-amber-800/80'
+                : 'text-slate-300'
             }`}
           >
-            {isPaused ? <Play className="w-3 h-3 text-amber-400" /> : <Pause className="w-3 h-3 text-slate-400" />}
-            {isPaused ? 'Resume Stream' : 'Pause'}
+            {isPaused ? <Play className="w-3 h-3 text-amber-400 fill-amber-400" /> : <Pause className="w-3 h-3 text-slate-400" />}
+            <span>{isPaused ? 'Resume' : 'Pause'}</span>
           </button>
         </div>
       </div>
 
       {/* Events Table */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[480px] divide-y divide-slate-800/60">
+      <div className="overflow-x-auto overflow-y-auto flex-1 divide-y divide-white/[0.03] scrollbar-thin">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-950/90 text-slate-400 uppercase tracking-wider sticky top-0 z-10 border-b border-slate-800">
+          <thead className="bg-[#0b0f1a] text-slate-400 uppercase tracking-wider sticky top-0 z-10 border-b border-white/[0.04]">
             <tr>
               <th className="py-2.5 px-3">Event ID</th>
               <th className="py-2.5 px-3">Timestamp</th>
@@ -140,11 +140,17 @@ export const EventStream: React.FC<EventStreamProps> = ({
               <th className="py-2.5 px-3">Detail</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/40 text-slate-300 font-mono">
+          <tbody className="divide-y divide-white/[0.02] text-slate-300 font-mono">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-slate-500 font-sans">
-                  No telemetry matching active filters.
+                <td colSpan={8} className="py-14 text-center text-slate-500 font-sans">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <Activity className="w-7 h-7 text-slate-600" />
+                    <p className="text-sm font-semibold text-slate-300">Telemetry Stream Ready</p>
+                    <p className="text-xs text-slate-500">
+                      No security telemetry recorded yet. Authenticate or run an attack scenario on the Login Page.
+                    </p>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -152,20 +158,22 @@ export const EventStream: React.FC<EventStreamProps> = ({
                 <tr
                   key={ev.id}
                   onClick={() => onSelectEvent && onSelectEvent(ev)}
-                  className="hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                  className="hover:bg-white/[0.02] transition-colors cursor-pointer group"
                 >
                   <td className="py-2 px-3 text-cyan-400 font-semibold">{ev.id}</td>
                   <td className="py-2 px-3 text-slate-400 whitespace-nowrap">
                     {ev.timestamp ? ev.timestamp.replace('T', ' ').slice(0, 19) : '—'}
                   </td>
                   <td className="py-2 px-3">
-                    <span className="font-semibold text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
+                    <span className="font-semibold text-slate-200 neo-well px-2 py-0.5 rounded text-[10px]">
                       {ev.type}
                     </span>
                   </td>
                   <td className="py-2 px-3 font-semibold text-slate-100">{ev.user || '—'}</td>
-                  <td className="py-2 px-3 text-slate-400 flex items-center gap-1">
-                    <Globe className="w-3 h-3 text-slate-500 inline" /> {ev.source || '127.0.0.1'}
+                  <td className="py-2 px-3 text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Globe className="w-3 h-3 text-slate-500 inline" /> {ev.source || '127.0.0.1'}
+                    </span>
                   </td>
                   <td className="py-2 px-3">{getSeverityBadge(ev.severity)}</td>
                   <td className="py-2 px-3">{getStatusBadge(ev.detection_status)}</td>

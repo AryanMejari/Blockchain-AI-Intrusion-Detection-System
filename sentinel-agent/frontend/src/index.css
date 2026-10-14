@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    background-color: #070b14;
+    background-color: #0c101c;
     color: #e2e8f0;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow-x: hidden;
@@ -17,27 +17,140 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: #090d17;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+  background: #1b2336;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #2a3652;
 }
 
+/* =========================================================
+   NEOMORPHIC DESIGN SYSTEM (Dark Soft-UI)
+   ========================================================= */
+
+/* Soft Raised Neomorphic Surface */
+.neo-card {
+  background: linear-gradient(145deg, #121827, #0e1320);
+  box-shadow: 7px 7px 18px rgba(3, 6, 15, 0.7), -5px -5px 15px rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Neomorphic Raised Card - Elevated */
+.neo-card-raised {
+  background: linear-gradient(145deg, #141b2c, #0f1422);
+  box-shadow: 10px 10px 24px rgba(2, 5, 12, 0.8), -6px -6px 18px rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Neomorphic Recessed Well / Inset */
+.neo-well {
+  background: #090d17;
+  box-shadow: inset 4px 4px 8px rgba(2, 4, 10, 0.75), inset -3px -3px 7px rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Neomorphic Button - Soft Tactile */
+.neo-btn {
+  background: linear-gradient(145deg, #151c2e, #101524);
+  box-shadow: 4px 4px 10px rgba(3, 6, 15, 0.6), -3px -3px 8px rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neo-btn:hover {
+  background: linear-gradient(145deg, #182136, #12192a);
+  box-shadow: 6px 6px 14px rgba(3, 6, 15, 0.7), -4px -4px 10px rgba(255, 255, 255, 0.06);
+}
+.neo-btn:active, .neo-btn.active {
+  background: #0d121f;
+  box-shadow: inset 3px 3px 6px rgba(2, 5, 12, 0.8), inset -2px -2px 5px rgba(255, 255, 255, 0.025);
+  transform: translateY(1px);
+}
+
+/* Neomorphic Primary / Accent Button */
+.neo-btn-primary {
+  background: linear-gradient(145deg, #0284c7, #0369a1);
+  box-shadow: 4px 4px 14px rgba(2, 132, 199, 0.35), -3px -3px 10px rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neo-btn-primary:hover {
+  background: linear-gradient(145deg, #0ea5e9, #0284c7);
+  box-shadow: 6px 6px 18px rgba(14, 165, 233, 0.45), -3px -3px 12px rgba(255, 255, 255, 0.12);
+}
+.neo-btn-primary:active {
+  box-shadow: inset 3px 3px 6px rgba(3, 105, 161, 0.8), inset -2px -2px 5px rgba(255, 255, 255, 0.1);
+  transform: translateY(1px);
+}
+
+/* Neomorphic Danger / Attack Button */
+.neo-btn-danger {
+  background: linear-gradient(145deg, #dc2626, #b91c1c);
+  box-shadow: 4px 4px 14px rgba(220, 38, 38, 0.35), -3px -3px 10px rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neo-btn-danger:hover {
+  background: linear-gradient(145deg, #ef4444, #dc2626);
+  box-shadow: 6px 6px 18px rgba(239, 68, 68, 0.5), -3px -3px 12px rgba(255, 255, 255, 0.12);
+}
+.neo-btn-danger:active {
+  box-shadow: inset 3px 3px 6px rgba(185, 28, 28, 0.8), inset -2px -2px 5px rgba(255, 255, 255, 0.1);
+  transform: translateY(1px);
+}
+
+/* Neomorphic Toast */
+.neo-toast {
+  background: linear-gradient(145deg, #151d2e, #0e1422);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+}
+
+/* Neomorphic Pill Badges */
+.neo-pill {
+  box-shadow: inset 2px 2px 4px rgba(2, 4, 10, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.03);
+}
+
+/* Glow effects */
 .glow-cyan {
-  box-shadow: 0 0 20px -5px rgba(0, 210, 255, 0.35);
+  box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.4);
 }
-
 .glow-red {
-  box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 20px -3px rgba(244, 63, 94, 0.45);
+}
+.glow-amber {
+  box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.4);
 }
 
+/* Cyber mesh background */
 .grid-bg {
-  background-size: 32px 32px;
+  background-size: 36px 36px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Keyframe animations */
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+@keyframes attackGlitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-1px, -1px); }
+  60% { transform: translate(2px, 1px); }
+  80% { transform: translate(1px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
+
+.animate-glitch {
+  animation: attackGlitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }

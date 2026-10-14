@@ -38,6 +38,7 @@ from backend.services.investigation_service import (
 )
 from backend.services.prolog_bridge import check_prolog_available, run_prolog
 from backend.services.scenario_runner import run_scenario
+from backend.storage.db import get_db_connection
 
 ROOT = PROJECT_ROOT
 FRONTEND_DIST = ROOT / "frontend" / "dist"
@@ -111,6 +112,39 @@ def health() -> dict[str, Any]:
     }
 
 
+# System Reset Endpoint (Clean State)
+@app.post("/api/system/reset")
+async def reset_system() -> dict[str, Any]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM events")
+    cursor.execute("DELETE FROM alerts")
+    cursor.execute("DELETE FROM investigations")
+    conn.commit()
+    conn.close()
+
+    empty_metrics = {
+        "total_events": 0,
+        "failed_logins": 0,
+        "active_alerts": 0,
+        "critical_alerts": 0,
+        "high_alerts": 0,
+        "medium_alerts": 0,
+        "low_alerts": 0,
+        "suspicious_accounts": 0,
+        "investigations_in_progress": 0,
+    }
+
+    await ws_manager.broadcast({
+        "type": "STATE_RESET",
+        "metrics": empty_metrics,
+        "alerts": [],
+        "alerts_count": 0,
+    })
+
+    return {"status": "ok", "message": "Telemetry and security alerts store reset to clean state.", "metrics": empty_metrics}
+
+
 # Monitored Login Screen Auth Simulator
 @app.post("/api/auth/login")
 async def auth_login(req: LoginRequest) -> dict[str, Any]:
@@ -120,12 +154,16 @@ async def auth_login(req: LoginRequest) -> dict[str, Any]:
         simulated_source=req.simulated_source,
         simulated_context=req.simulated_context,
     )
+    alerts = res.get("pipeline", {}).get("alerts", [])
+    latest_alert = alerts[0] if alerts else None
     # Broadcast live update
     await ws_manager.broadcast({
         "type": "STATE_UPDATED",
         "event": res.get("event"),
         "metrics": res.get("pipeline", {}).get("metrics"),
-        "alerts_count": len(res.get("pipeline", {}).get("alerts", [])),
+        "alerts_count": len(alerts),
+        "alerts": alerts,
+        "latest_alert": latest_alert,
     })
     return res
 
@@ -136,12 +174,16 @@ async def run_lab_scenario(scenario_id: str, req: ScenarioRunRequest | None = No
     target = req.target_user if req else None
     source = req.source_ip if req else None
     res = run_scenario(scenario_id=scenario_id, target_user=target, source_ip=source)
+    alerts = res.get("pipeline", {}).get("alerts", [])
+    latest_alert = alerts[0] if alerts else None
     await ws_manager.broadcast({
         "type": "SCENARIO_EXECUTED",
         "scenario_id": scenario_id,
         "events_count": res["events_count"],
-        "metrics": res["pipeline"]["metrics"],
-        "alerts_count": len(res["pipeline"]["alerts"]),
+        "metrics": res.get("pipeline", {}).get("metrics"),
+        "alerts_count": len(alerts),
+        "alerts": alerts,
+        "latest_alert": latest_alert,
     })
     return res
 
@@ -162,10 +204,15 @@ def list_events(
 async def ingest_event(event: SecurityEvent) -> dict[str, Any]:
     ev_dict = event.model_dump()
     result = run_pipeline(ev_dict)
+    alerts = result.get("alerts", [])
+    latest_alert = alerts[0] if alerts else None
     await ws_manager.broadcast({
         "type": "EVENT_INGESTED",
         "event": result["new_event"],
         "metrics": result["metrics"],
+        "alerts_count": len(alerts),
+        "alerts": alerts,
+        "latest_alert": latest_alert,
     })
     return result
 

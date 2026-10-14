@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { GraphNode, GraphEdge } from '../lib/api';
-import { Network, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Network, ZoomIn, ZoomOut, RotateCcw, Share2 } from 'lucide-react';
 
 interface RelationshipGraphProps {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
+  graph: {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+  };
+  subject?: string;
 }
 
-export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ nodes, edges }) => {
+export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ graph, subject }) => {
+  const nodes = graph?.nodes || [];
+  const edges = graph?.edges || [];
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
-  // Compute a circular / radial layout for clean visual aesthetics
+  // Layout coordinates
   const width = 640;
   const height = 360;
   const centerX = width / 2;
@@ -20,7 +25,6 @@ export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ nodes, edg
   const nodePositions = new Map<string, { x: number; y: number }>();
 
   nodes.forEach((node, idx) => {
-    // Separate alert nodes in center, subjects & sources in middle ring, events in outer ring
     if (node.type === 'alert') {
       const angle = (idx / Math.max(1, nodes.length)) * 2 * Math.PI;
       nodePositions.set(node.id, {
@@ -44,53 +48,49 @@ export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ nodes, edg
 
   const getNodeColor = (type: string, severity?: string) => {
     if (type === 'alert') {
-      return severity === 'critical' ? '#ef4444' : severity === 'high' ? '#f97316' : '#f59e0b';
+      return severity === 'critical' ? '#f43f5e' : severity === 'high' ? '#f97316' : '#f59e0b';
     }
-    if (type === 'user' || type === 'subject') return '#00d2ff';
-    if (type === 'source') return '#a855f7';
+    if (type === 'user' || type === 'subject') return '#06b6d4';
+    if (type === 'source') return '#c084fc';
     return '#64748b';
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-2xl backdrop-blur-sm flex flex-col">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+    <div className="neo-card rounded-2xl p-6 shadow-2xl flex flex-col h-full">
+      <div className="flex flex-wrap items-center justify-between pb-3 border-b border-white/[0.04] mb-3 gap-2">
         <div className="flex items-center gap-2">
           <Network className="w-4 h-4 text-cyan-400" />
-          <h2 className="text-sm font-semibold tracking-wider uppercase text-slate-200">
-            Threat & Entity Relationship Graph
+          <h2 className="text-xs font-bold tracking-wider uppercase text-slate-200">
+            Threat & Entity Correlation Graph
           </h2>
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="flex items-center gap-1 font-mono text-[11px]">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Alert
+        <div className="flex items-center gap-3 text-[10px] text-slate-400 font-mono">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Alert
           </span>
-          <span className="flex items-center gap-1 font-mono text-[11px]">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> Identity
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" /> Identity
           </span>
-          <span className="flex items-center gap-1 font-mono text-[11px]">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block"></span> Source IP
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-purple-400 inline-block" /> Source IP
           </span>
-          <span className="flex items-center gap-1 font-mono text-[11px]">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> Event
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-slate-500 inline-block" /> Event
           </span>
         </div>
       </div>
 
       {nodes.length === 0 ? (
-        <div className="text-center py-16 text-xs text-slate-500">
-          No correlated entities to render in relationship graph.
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 neo-well rounded-xl">
+          <Share2 className="w-10 h-10 text-slate-600 mb-2" />
+          <p className="text-slate-300 text-sm font-semibold">Graph Ready: Awaiting Entities</p>
+          <p className="text-slate-500 text-xs mt-1 max-w-sm">
+            Relationship nodes link users, IP sources, and Prolog alerts dynamically when correlated events occur.
+          </p>
         </div>
       ) : (
-        <div className="relative border border-slate-800/80 rounded-lg bg-slate-950 overflow-hidden">
-          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-72 md:h-80 select-none">
-            {/* Background grid */}
-            <defs>
-              <pattern id="graph-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width={width} height={height} fill="url(#graph-grid)" />
-
+        <div className="relative neo-well rounded-xl overflow-hidden flex-1 flex items-center justify-center">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full select-none">
             {/* Edges */}
             {edges.map((edge, idx) => {
               const srcPos = nodePositions.get(edge.source);
@@ -104,9 +104,9 @@ export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ nodes, edg
                     y1={srcPos.y}
                     x2={tgtPos.x}
                     y2={tgtPos.y}
-                    stroke="#1e293b"
+                    stroke="rgba(255, 255, 255, 0.08)"
                     strokeWidth="1.5"
-                    strokeDasharray="2 2"
+                    strokeDasharray="3 3"
                   />
                 </g>
               );
@@ -127,15 +127,15 @@ export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ nodes, edg
                   className="cursor-pointer group"
                 >
                   <circle
-                    r={node.type === 'alert' ? 12 : 9}
-                    fill="#0f172a"
+                    r={node.type === 'alert' ? 13 : 9}
+                    fill="#0f1423"
                     stroke={color}
                     strokeWidth={isSelected ? 3 : 2}
                     className="transition-all duration-150"
                   />
                   <circle r={node.type === 'alert' ? 5 : 3.5} fill={color} />
                   <text
-                    y={node.type === 'alert' ? 22 : 18}
+                    y={node.type === 'alert' ? 24 : 20}
                     textAnchor="middle"
                     fill="#cbd5e1"
                     fontSize="9"
@@ -151,15 +151,15 @@ export const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ nodes, edg
 
           {/* Selected Node Details Tooltip */}
           {selectedNode && (
-            <div className="absolute bottom-2 left-2 right-2 p-2.5 bg-slate-900/95 border border-slate-700 rounded-lg text-xs flex items-center justify-between backdrop-blur">
+            <div className="absolute bottom-3 left-3 right-3 p-3 neo-card-raised rounded-xl text-xs flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-cyan-400 font-semibold">{selectedNode.id}</span>
-                <span className="text-slate-400">({selectedNode.type})</span>
+                <span className="font-mono text-cyan-400 font-bold">{selectedNode.id}</span>
+                <span className="text-slate-400 text-[11px]">({selectedNode.type})</span>
                 <span className="text-slate-200 font-medium">{selectedNode.label}</span>
               </div>
               <button
                 onClick={() => setSelectedNode(null)}
-                className="text-slate-400 hover:text-slate-200 text-xs px-2 py-0.5 rounded bg-slate-800"
+                className="text-slate-400 hover:text-slate-200 text-[11px] px-2.5 py-1 rounded-lg neo-btn"
               >
                 Dismiss
               </button>

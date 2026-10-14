@@ -99,6 +99,29 @@ export async function login(
   return res.json();
 }
 
+export async function resetSystemTelemetry() {
+  const res = await fetch(`${BASE_URL}/api/system/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    throw new Error('Failed to reset system telemetry');
+  }
+  return res.json();
+}
+
+export async function ingestEvent(event: Partial<SecurityEvent>) {
+  const res = await fetch(`${BASE_URL}/api/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(event),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to ingest security event');
+  }
+  return res.json();
+}
+
 export async function runScenario(scenario_id: string, target_user?: string, source_ip?: string) {
   const res = await fetch(`${BASE_URL}/api/lab/scenarios/${scenario_id}/run`, {
     method: 'POST',
