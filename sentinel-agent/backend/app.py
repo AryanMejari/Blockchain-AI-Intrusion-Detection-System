@@ -38,6 +38,9 @@ from backend.services.investigation_service import (
 )
 from backend.services.prolog_bridge import check_prolog_available, run_prolog
 from backend.services.scenario_runner import run_scenario
+from backend.services.blockchain_ledger import blockchain_ledger
+from backend.services.ipfs_storage import ipfs_service
+from backend.services.report_service import report_service
 from backend.storage.db import get_db_connection
 
 ROOT = PROJECT_ROOT
@@ -123,6 +126,8 @@ async def reset_system() -> dict[str, Any]:
     conn.commit()
     conn.close()
 
+    blockchain_ledger.reset_ledger()
+
     empty_metrics = {
         "total_events": 0,
         "failed_logins": 0,
@@ -140,9 +145,10 @@ async def reset_system() -> dict[str, Any]:
         "metrics": empty_metrics,
         "alerts": [],
         "alerts_count": 0,
+        "ledger": blockchain_ledger.get_status(),
     })
 
-    return {"status": "ok", "message": "Telemetry and security alerts store reset to clean state.", "metrics": empty_metrics}
+    return {"status": "ok", "message": "Telemetry, security alerts, and ledger reset to genesis state.", "metrics": empty_metrics}
 
 
 # Monitored Login Screen Auth Simulator
@@ -156,6 +162,12 @@ async def auth_login(req: LoginRequest) -> dict[str, Any]:
     )
     alerts = res.get("pipeline", {}).get("alerts", [])
     latest_alert = alerts[0] if alerts else None
+
+    # Cryptographically anchor into Blockchain & IPFS
+    new_block = None
+    if res.get("event"):
+        new_block = blockchain_ledger.anchor_events([res["event"]], alerts)
+
     # Broadcast live update
     await ws_manager.broadcast({
         "type": "STATE_UPDATED",
@@ -164,6 +176,8 @@ async def auth_login(req: LoginRequest) -> dict[str, Any]:
         "alerts_count": len(alerts),
         "alerts": alerts,
         "latest_alert": latest_alert,
+        "latest_block": new_block.to_dict() if new_block else None,
+        "ledger_status": blockchain_ledger.get_status(),
     })
     return res
 
@@ -176,6 +190,12 @@ async def run_lab_scenario(scenario_id: str, req: ScenarioRunRequest | None = No
     res = run_scenario(scenario_id=scenario_id, target_user=target, source_ip=source)
     alerts = res.get("pipeline", {}).get("alerts", [])
     latest_alert = alerts[0] if alerts else None
+
+    # Cryptographically anchor batch of attack events
+    new_block = None
+    if res.get("events"):
+        new_block = blockchain_ledger.anchor_events(res["events"], alerts)
+
     await ws_manager.broadcast({
         "type": "SCENARIO_EXECUTED",
         "scenario_id": scenario_id,
@@ -184,6 +204,8 @@ async def run_lab_scenario(scenario_id: str, req: ScenarioRunRequest | None = No
         "alerts_count": len(alerts),
         "alerts": alerts,
         "latest_alert": latest_alert,
+        "latest_block": new_block.to_dict() if new_block else None,
+        "ledger_status": blockchain_ledger.get_status(),
     })
     return res
 
@@ -206,6 +228,11 @@ async def ingest_event(event: SecurityEvent) -> dict[str, Any]:
     result = run_pipeline(ev_dict)
     alerts = result.get("alerts", [])
     latest_alert = alerts[0] if alerts else None
+
+    new_block = None
+    if result.get("new_event"):
+        new_block = blockchain_ledger.anchor_events([result["new_event"]], alerts)
+
     await ws_manager.broadcast({
         "type": "EVENT_INGESTED",
         "event": result["new_event"],
@@ -213,8 +240,107 @@ async def ingest_event(event: SecurityEvent) -> dict[str, Any]:
         "alerts_count": len(alerts),
         "alerts": alerts,
         "latest_alert": latest_alert,
+        "latest_block": new_block.to_dict() if new_block else None,
+        "ledger_status": blockchain_ledger.get_status(),
     })
     return result
+
+
+# =========================================================
+# BLOCKCHAIN & IPFS AUDIT LEDGER ENDPOINTS
+# =========================================================
+
+@app.get("/api/ledger/status")
+def get_ledger_status() -> dict[str, Any]:
+    return blockchain_ledger.get_status()
+
+
+@app.get("/api/ledger/blocks")
+def get_ledger_blocks(limit: int = Query(default=50, ge=1, le=200)) -> list[dict[str, Any]]:
+    return blockchain_ledger.get_blocks(limit=limit)
+
+
+@app.get("/api/ipfs/node-status")
+def get_ipfs_node_status() -> dict[str, Any]:
+    return ipfs_service.get_node_status()
+
+
+@app.get("/api/ipfs/{cid}")
+def get_ipfs_bundle(cid: str) -> dict[str, Any]:
+    bundle = ipfs_service.get_bundle(cid)
+    if not bundle:
+        raise HTTPException(status_code=404, detail=f"IPFS bundle '{cid}' not found in vault")
+    return bundle
+
+
+@app.post("/api/ledger/verify")
+def verify_ledger() -> dict[str, Any]:
+    return blockchain_ledger.verify_chain_integrity()
+
+
+@app.post("/api/ledger/simulate-tamper")
+async def simulate_tamper(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    eid = payload.get("event_id") if payload else None
+    detail = payload.get("detail") if payload else None
+    res = blockchain_ledger.simulate_db_tamper(event_id=eid, altered_detail=detail)
+    await ws_manager.broadcast({
+        "type": "TAMPER_SIMULATED",
+        "result": res,
+        "verification": blockchain_ledger.verify_chain_integrity(),
+    })
+    return res
+
+
+@app.post("/api/ledger/restore-tamper")
+async def restore_tamper(payload: dict[str, Any]) -> dict[str, Any]:
+    eid = payload.get("event_id")
+    if not eid:
+        raise HTTPException(status_code=400, detail="Missing required field 'event_id'")
+    res = blockchain_ledger.restore_db_tamper(event_id=eid)
+    await ws_manager.broadcast({
+        "type": "TAMPER_RESTORED",
+        "result": res,
+        "verification": blockchain_ledger.verify_chain_integrity(),
+    })
+    return res
+
+
+# =========================================================
+# FORENSIC AUDIT REPORT ENDPOINTS
+# =========================================================
+
+@app.post("/api/reports/generate")
+async def generate_report(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    title = payload.get("title") if payload else None
+    report = report_service.generate_audit_report(title=title)
+    await ws_manager.broadcast({
+        "type": "REPORT_GENERATED",
+        "report_id": report["report_id"],
+        "ipfs_cid": report["ipfs_cid"],
+        "status": report.get("cryptographic_attestation", {}).get("chain_status"),
+    })
+    return report
+
+
+@app.get("/api/reports")
+def list_reports() -> list[dict[str, Any]]:
+    return report_service.list_reports()
+
+
+@app.get("/api/reports/{report_id}")
+def get_report(report_id: str) -> dict[str, Any]:
+    rep = report_service.get_report(report_id)
+    if not rep:
+        raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
+    return rep
+
+
+@app.get("/api/reports/{report_id}/markdown")
+def get_report_markdown(report_id: str) -> dict[str, Any]:
+    md = report_service.generate_markdown(report_id)
+    if not md:
+        raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
+    return {"report_id": report_id, "markdown": md}
 
 
 # Alerts Center

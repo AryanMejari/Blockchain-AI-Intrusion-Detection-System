@@ -37,6 +37,7 @@ import { AlertCenter } from '../components/AlertCenter';
 import { ReasoningInspector } from '../components/ReasoningInspector';
 import { AttackTimeline } from '../components/AttackTimeline';
 import { RelationshipGraph } from '../components/RelationshipGraph';
+import { BlockchainLedgerView } from '../components/BlockchainLedgerView';
 import {
   AdminToastContainer,
   ToastItem,
@@ -69,7 +70,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToLogin 
   });
 
   const [isPaused, setIsPaused] = useState(false);
-  const [activeTab, setActiveTab] = useState<'console' | 'timeline' | 'graph'>('console');
+  const [activeTab, setActiveTab] = useState<'console' | 'timeline' | 'graph' | 'blockchain'>('console');
   const [wsConnected, setWsConnected] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -415,6 +416,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToLogin 
             >
               Correlation Entity Graph
             </button>
+
+            <button
+              onClick={() => setActiveTab('blockchain')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+                activeTab === 'blockchain'
+                  ? 'neo-btn-primary text-slate-950 font-bold'
+                  : 'neo-btn text-slate-300 hover:text-cyan-400'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Blockchain & IPFS Ledger</span>
+            </button>
           </div>
 
           <div className="text-[11px] text-slate-500 font-mono">
@@ -459,6 +472,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToLogin 
               graph={investigationData.graph}
               subject={selectedAlert?.subject}
             />
+          </div>
+        )}
+
+        {/* Tab 4: Blockchain & IPFS Audit Ledger */}
+        {activeTab === 'blockchain' && (
+          <div className="min-h-[680px]">
+            <BlockchainLedgerView />
           </div>
         )}
 

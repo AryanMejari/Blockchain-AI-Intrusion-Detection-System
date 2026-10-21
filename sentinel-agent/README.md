@@ -158,9 +158,29 @@ Test the SWI-Prolog engine directly via stdin:
 | `GET` | `/api/metrics` | Retrieve SOC overview metrics |
 | `GET` | `/api/investigations/{id}` | Retrieve investigation graph and timeline |
 | `GET` | `/api/investigations/{id}/explanation` | Retrieve AI reasoning deduction trace |
+| `GET` | `/api/ipfs/node-status` | Live IPFS Desktop node status (`/ip4/127.0.0.1/tcp/5001`) |
+| `GET` | `/api/ipfs/{cid}` | Fetch and verify content-addressed IPFS bundle |
+| `GET` | `/api/ledger/status` | Blockchain height, tip hash, and Merkle root statistics |
+| `GET` | `/api/ledger/blocks` | Chronological list of cryptographic ledger blocks |
+| `POST` | `/api/ledger/verify` | Comprehensive cryptographic chain and SQLite integrity audit |
+| `POST` | `/api/ledger/simulate-tamper` | Simulate attacker altering a record in SQLite |
+| `POST` | `/api/ledger/restore-tamper` | Restore tampered database rows from immutable IPFS snapshot |
+| `POST` | `/api/reports/generate` | Generate, pin to IPFS, and sign cryptographic forensic audit report |
+| `GET` | `/api/reports` | List generated SOC audit compliance reports |
+| `GET` | `/api/reports/{id}` | Retrieve full report JSON package |
+| `GET` | `/api/reports/{id}/markdown` | Export printable/downloadable audit Markdown report |
 | `WS` | `/ws/dashboard` | WebSocket stream for live incident updates |
 
 ---
+
+## Decentralized IPFS & Blockchain Audit Ledger
+
+Sentinel incorporates an immutable cryptographic ledger:
+- **IPFS Desktop Connectivity:** Connects directly via multiaddress `/ip4/127.0.0.1/tcp/5001` (Kubo RPC API). Forensic bundles and audit reports are pinned directly to the running IPFS node with local vault durability fallback.
+- **Content-Addressing:** 100% compliant UnixFS CIDv0 Base58 multihashing matching Kubo node calculations.
+- **Merkle Tree Proofs:** Telemetry events are batched into cryptographic blocks with pairwise SHA-256 Merkle root trees.
+- **Anti-Tamper & Restoration:** Detects unauthorized SQLite modifications instantly and restores original ground facts directly from immutable IPFS evidence packages.
+- **Forensic Compliance Reports:** One-click generation of SOC audit reports signed with SHA-256 digests and pinned to IPFS.
 
 ## Project Structure
 
