@@ -161,7 +161,8 @@ Test the SWI-Prolog engine directly via stdin:
 | `GET` | `/api/ipfs/node-status` | Live IPFS Desktop node status (`/ip4/127.0.0.1/tcp/5001`) |
 | `GET` | `/api/ipfs/{cid}` | Fetch and verify content-addressed IPFS bundle |
 | `GET` | `/api/ledger/status` | Blockchain height, tip hash, and Merkle root statistics |
-| `GET` | `/api/ledger/blocks` | Chronological list of cryptographic ledger blocks |
+| `GET` | `/api/ledger/network` | Live Ganache Ethereum EVM network, chain ID, and contract address |
+| `GET` | `/api/ledger/blocks` | Chronological list of cryptographic ledger blocks from EVM contract |
 | `POST` | `/api/ledger/verify` | Comprehensive cryptographic chain and SQLite integrity audit |
 | `POST` | `/api/ledger/simulate-tamper` | Simulate attacker altering a record in SQLite |
 | `POST` | `/api/ledger/restore-tamper` | Restore tampered database rows from immutable IPFS snapshot |
@@ -173,12 +174,16 @@ Test the SWI-Prolog engine directly via stdin:
 
 ---
 
-## Decentralized IPFS & Blockchain Audit Ledger
+## Decentralized IPFS & Ganache Solidity Blockchain Audit Ledger
 
-Sentinel incorporates an immutable cryptographic ledger:
-- **IPFS Desktop Connectivity:** Connects directly via multiaddress `/ip4/127.0.0.1/tcp/5001` (Kubo RPC API). Forensic bundles and audit reports are pinned directly to the running IPFS node with local vault durability fallback.
+Sentinel features an actual decentralized audit ledger combining an Ethereum EVM smart contract and IPFS content storage:
+- **Ganache Ethereum EVM Node:** Runs on `http://127.0.0.1:8545` (Chain ID `1337`).
+- **Solidity Smart Contract (`SentinelLedger.sol`):** Compiled with `solc` (Shanghai EVM target) and deployed on Ganache at `0xC89Ce4735882C9F0f0FE26686c53074E09B0D550`.
+  - Zero Python-simulated blockchain: blocks, Merkle roots, IPFS CIDs, and event IDs are anchored and verified exclusively through Solidity smart contract calls.
+  - Features `anchorBlock()`, `getBlock()`, `getRecentBlocks()`, `getStatus()`, and `verifyChainIntegrity()`.
+- **IPFS Desktop Connectivity:** Connects directly via multiaddress `/ip4/127.0.0.1/tcp/5001` (Kubo RPC API). Forensic bundles and audit reports are pinned directly to the running IPFS node with resilient local vault fallback.
 - **Content-Addressing:** 100% compliant UnixFS CIDv0 Base58 multihashing matching Kubo node calculations.
-- **Merkle Tree Proofs:** Telemetry events are batched into cryptographic blocks with pairwise SHA-256 Merkle root trees.
+- **Merkle Tree Proofs:** Telemetry events are batched into cryptographic blocks with pairwise SHA-256 Merkle root trees and anchored on-chain.
 - **Anti-Tamper & Restoration:** Detects unauthorized SQLite modifications instantly and restores original ground facts directly from immutable IPFS evidence packages.
 - **Forensic Compliance Reports:** One-click generation of SOC audit reports signed with SHA-256 digests and pinned to IPFS.
 

@@ -255,6 +255,11 @@ def get_ledger_status() -> dict[str, Any]:
     return blockchain_ledger.get_status()
 
 
+@app.get("/api/ledger/network")
+def get_ledger_network() -> dict[str, Any]:
+    return blockchain_ledger.get_network_status()
+
+
 @app.get("/api/ledger/blocks")
 def get_ledger_blocks(limit: int = Query(default=50, ge=1, le=200)) -> list[dict[str, Any]]:
     return blockchain_ledger.get_blocks(limit=limit)

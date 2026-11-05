@@ -99,19 +99,6 @@ def init_db() -> None:
     );
     """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS ledger_blocks (
-        block_index INTEGER PRIMARY KEY,
-        timestamp TEXT NOT NULL,
-        merkle_root TEXT NOT NULL,
-        ipfs_cid TEXT NOT NULL,
-        prev_hash TEXT NOT NULL,
-        block_hash TEXT NOT NULL,
-        event_ids_json TEXT NOT NULL,
-        events_count INTEGER NOT NULL,
-        nonce INTEGER DEFAULT 0
-    );
-    """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS audit_reports (

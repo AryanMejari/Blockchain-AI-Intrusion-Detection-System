@@ -88,6 +88,8 @@ export interface LedgerBlock {
   event_ids: string[];
   events_count: number;
   nonce?: number;
+  miner?: string;
+  tx_hash?: string;
 }
 
 export interface LedgerStatus {
@@ -98,7 +100,22 @@ export interface LedgerStatus {
   latest_block_hash: string;
   latest_merkle_root: string;
   latest_ipfs_cid: string;
+  contract_address?: string;
+  network?: string;
+  chain_id?: number;
+  rpc_url?: string;
   ipfs_objects_count: number;
+}
+
+export interface GanacheNetworkStatus {
+  connected: boolean;
+  provider: string;
+  chain_id?: number;
+  network_name: string;
+  contract_address?: string;
+  deployer_account?: string;
+  current_eth_block?: number;
+  gas_price_gwei?: number;
 }
 
 export interface IPFSBundle {
@@ -185,9 +202,25 @@ export interface AuditReport {
 
 const BASE_URL = '';
 
+async function parseJson<T = any>(res: Response): Promise<T> {
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    if (!res.ok) {
+      throw new Error(data.detail || data.message || `Request failed with status ${res.status}`);
+    }
+    return data as T;
+  } catch (err: any) {
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}: ${text.slice(0, 100)}`);
+    }
+    throw new Error(`Failed to parse JSON response: ${err.message}`);
+  }
+}
+
 export async function fetchIPFSNodeStatus(): Promise<IPFSNodeStatus> {
   const res = await fetch(`${BASE_URL}/api/ipfs/node-status`);
-  return res.json();
+  return parseJson<IPFSNodeStatus>(res);
 }
 
 export async function generateAuditReport(title?: string): Promise<AuditReport> {
@@ -196,38 +229,43 @@ export async function generateAuditReport(title?: string): Promise<AuditReport> 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
   });
-  return res.json();
+  return parseJson<AuditReport>(res);
 }
 
 export async function fetchReports(): Promise<AuditReportSummary[]> {
   const res = await fetch(`${BASE_URL}/api/reports`);
-  return res.json();
+  return parseJson<AuditReportSummary[]>(res);
 }
 
 export async function fetchReportById(reportId: string): Promise<AuditReport> {
   const res = await fetch(`${BASE_URL}/api/reports/${encodeURIComponent(reportId)}`);
-  return res.json();
+  return parseJson<AuditReport>(res);
 }
 
 export async function fetchReportMarkdown(reportId: string): Promise<string> {
   const res = await fetch(`${BASE_URL}/api/reports/${encodeURIComponent(reportId)}/markdown`);
-  const data = await res.json();
+  const data = await parseJson<{ markdown: string }>(res);
   return data.markdown;
 }
 
 export async function fetchLedgerStatus(): Promise<LedgerStatus> {
   const res = await fetch(`${BASE_URL}/api/ledger/status`);
-  return res.json();
+  return parseJson<LedgerStatus>(res);
+}
+
+export async function fetchLedgerNetwork(): Promise<GanacheNetworkStatus> {
+  const res = await fetch(`${BASE_URL}/api/ledger/network`);
+  return parseJson<GanacheNetworkStatus>(res);
 }
 
 export async function fetchLedgerBlocks(limit: number = 50): Promise<LedgerBlock[]> {
   const res = await fetch(`${BASE_URL}/api/ledger/blocks?limit=${limit}`);
-  return res.json();
+  return parseJson<LedgerBlock[]>(res);
 }
 
 export async function fetchIPFSBundle(cid: string): Promise<IPFSBundle> {
   const res = await fetch(`${BASE_URL}/api/ipfs/${encodeURIComponent(cid)}`);
-  return res.json();
+  return parseJson<IPFSBundle>(res);
 }
 
 export async function verifyLedger(): Promise<LedgerVerificationResult> {
@@ -235,7 +273,7 @@ export async function verifyLedger(): Promise<LedgerVerificationResult> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   });
-  return res.json();
+  return parseJson<LedgerVerificationResult>(res);
 }
 
 export async function simulateTamper(event_id?: string, detail?: string) {
@@ -244,7 +282,7 @@ export async function simulateTamper(event_id?: string, detail?: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ event_id, detail }),
   });
-  return res.json();
+  return parseJson(res);
 }
 
 export async function restoreTamper(event_id: string) {
@@ -253,12 +291,12 @@ export async function restoreTamper(event_id: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ event_id }),
   });
-  return res.json();
+  return parseJson(res);
 }
 
 export async function fetchHealth() {
   const res = await fetch(`${BASE_URL}/api/health`);
-  return res.json();
+  return parseJson(res);
 }
 
 export async function login(
@@ -417,7 +455,18 @@ export function createDashboardWebSocket(
       clearTimeout(reconnectTimer);
       if (ws) {
         ws.onclose = null;
-        ws.close();
+        ws.onerror = null;
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close(1000, 'Normal Closure');
+        } else if (ws.readyState === WebSocket.CONNECTING) {
+          const pending = ws;
+          pending.onopen = () => {
+            try {
+              pending.close(1000, 'Normal Closure');
+            } catch {}
+          };
+        }
+        ws = null;
       }
     },
   };

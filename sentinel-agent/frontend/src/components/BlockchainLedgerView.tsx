@@ -30,11 +30,13 @@ import {
   LedgerBlock,
   LedgerStatus,
   LedgerVerificationResult,
+  GanacheNetworkStatus,
   IPFSBundle,
   IPFSNodeStatus,
   AuditReportSummary,
   AuditReport,
   fetchLedgerStatus,
+  fetchLedgerNetwork,
   fetchLedgerBlocks,
   fetchIPFSBundle,
   fetchIPFSNodeStatus,
@@ -49,6 +51,7 @@ import {
 
 export const BlockchainLedgerView: React.FC = () => {
   const [status, setStatus] = useState<LedgerStatus | null>(null);
+  const [ganacheNetwork, setGanacheNetwork] = useState<GanacheNetworkStatus | null>(null);
   const [blocks, setBlocks] = useState<LedgerBlock[]>([]);
   const [verification, setVerification] = useState<LedgerVerificationResult | null>(null);
   const [nodeStatus, setNodeStatus] = useState<IPFSNodeStatus | null>(null);
@@ -72,16 +75,18 @@ export const BlockchainLedgerView: React.FC = () => {
   const loadLedgerData = async () => {
     setIsLoading(true);
     try {
-      const [s, b, node, reps] = await Promise.all([
-        fetchLedgerStatus(),
-        fetchLedgerBlocks(50),
-        fetchIPFSNodeStatus(),
-        fetchReports(),
+      const [s, gNet, b, node, reps] = await Promise.all([
+        fetchLedgerStatus().catch(() => null),
+        fetchLedgerNetwork().catch(() => null),
+        fetchLedgerBlocks(50).catch(() => []),
+        fetchIPFSNodeStatus().catch(() => null),
+        fetchReports().catch(() => []),
       ]);
-      setStatus(s);
-      setBlocks(b);
-      setNodeStatus(node);
-      setReports(reps);
+      if (s) setStatus(s);
+      if (gNet) setGanacheNetwork(gNet);
+      if (b) setBlocks(b);
+      if (node) setNodeStatus(node);
+      if (reps) setReports(reps);
     } catch (err) {
       console.error('Failed to load blockchain ledger data:', err);
     } finally {
@@ -201,6 +206,92 @@ export const BlockchainLedgerView: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Ganache EVM & Solidity Smart Contract Status Banner */}
+      <section className="neo-card rounded-2xl p-4 border border-white/[0.06] bg-gradient-to-r from-indigo-950/40 via-slate-900/80 to-slate-950/80">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl neo-well flex items-center justify-center text-indigo-400">
+                <Boxes className={`w-5 h-5 ${ganacheNetwork?.connected !== false ? 'text-indigo-400' : 'text-rose-400'}`} />
+              </div>
+              {ganacheNetwork?.connected !== false && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                </span>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                  Ganache EVM Blockchain & Solidity Ledger
+                </h3>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                    ganacheNetwork?.connected !== false
+                      ? 'bg-indigo-950/80 text-indigo-300 border border-indigo-500/30'
+                      : 'bg-rose-950/80 text-rose-400 border border-rose-500/30'
+                  }`}
+                >
+                  {ganacheNetwork?.connected !== false ? `CHAIN ID: ${ganacheNetwork?.chain_id ?? 1337} (LIVE EVM)` : 'OFFLINE'}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-cyan-950/80 text-cyan-300 border border-cyan-500/30">
+                  SentinelLedger.sol
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                Contract Address:{' '}
+                <span className="text-cyan-400 font-bold">
+                  {ganacheNetwork?.contract_address || status?.contract_address || '0xC89Ce4735882C9F0f0FE26686c53074E09B0D550'}
+                </span>
+                <button
+                  onClick={() =>
+                    copyToClipboard(
+                      ganacheNetwork?.contract_address || status?.contract_address || '0xC89Ce4735882C9F0f0FE26686c53074E09B0D550',
+                      'contract'
+                    )
+                  }
+                  className="inline-flex items-center ml-1.5 hover:text-cyan-300 text-slate-500"
+                  title="Copy Smart Contract Address"
+                >
+                  {copiedText === 'contract' ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </p>
+            </div>
+          </div>
+
+          {/* RPC, EVM Block & Gas Info */}
+          <div className="flex items-center gap-3 text-xs font-mono">
+            <div className="neo-well px-3 py-1.5 rounded-xl flex items-center gap-2 text-slate-300">
+              <span className="text-slate-500 text-[10px]">RPC:</span>
+              <span className="text-[11px] text-slate-200">
+                {ganacheNetwork?.provider || 'http://127.0.0.1:8545'}
+              </span>
+            </div>
+            {ganacheNetwork?.current_eth_block !== undefined && (
+              <div className="neo-well px-3 py-1.5 rounded-xl flex items-center gap-2 text-slate-300">
+                <span className="text-slate-500 text-[10px]">EVM BLOCK:</span>
+                <span className="text-[11px] text-indigo-400 font-bold">
+                  #{ganacheNetwork.current_eth_block}
+                </span>
+              </div>
+            )}
+            {ganacheNetwork?.gas_price_gwei !== undefined && (
+              <div className="neo-well px-3 py-1.5 rounded-xl flex items-center gap-2 text-slate-300">
+                <span className="text-slate-500 text-[10px]">GAS:</span>
+                <span className="text-[11px] text-emerald-400 font-bold">
+                  {ganacheNetwork.gas_price_gwei} Gwei
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* IPFS Node Live Status Banner */}
       <section className="neo-card rounded-2xl p-4 border border-white/[0.06] bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-slate-950/80">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -586,7 +677,7 @@ export const BlockchainLedgerView: React.FC = () => {
                 {/* Hashes Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[10px] font-mono p-2.5 rounded-xl neo-well text-slate-400 mb-2.5">
                   <div>
-                    <span className="text-slate-500 block">BLOCK HASH</span>
+                    <span className="text-slate-500 block">BLOCK HASH (KECCAK-256)</span>
                     <span className="text-slate-200 truncate block font-bold" title={block.block_hash}>
                       {block.block_hash}
                     </span>
@@ -604,6 +695,39 @@ export const BlockchainLedgerView: React.FC = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Ganache EVM On-Chain Proof */}
+                {(block.tx_hash || block.miner) && (
+                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono px-2.5 py-1.5 rounded-xl bg-indigo-950/20 border border-indigo-500/10 text-indigo-300 mb-2.5">
+                    {block.tx_hash && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-500 font-semibold">EVM TX:</span>
+                        <span className="text-indigo-300 truncate max-w-xs" title={block.tx_hash}>
+                          {block.tx_hash}
+                        </span>
+                        <button
+                          onClick={() => copyToClipboard(block.tx_hash!, `tx-${block.block_index}`)}
+                          className="hover:text-cyan-300 text-slate-500"
+                          title="Copy Transaction Hash"
+                        >
+                          {copiedText === `tx-${block.block_index}` ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+                    {block.miner && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-500 font-semibold">MINER:</span>
+                        <span className="text-slate-400 truncate max-w-[140px]" title={block.miner}>
+                          {block.miner}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Event IDs */}
                 {block.event_ids && block.event_ids.length > 0 && (
